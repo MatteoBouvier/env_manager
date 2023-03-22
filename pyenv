@@ -1,0 +1,90 @@
+#!/bin/bash
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+switch_env() {
+	deactivate &> /dev/null
+
+	{
+		source "$PWD/venv_$( basename $PWD )/bin/activate" &&
+		printf "%b✓ switched to:%b venv_$( basename $PWD ) \n" $GREEN $NC
+	} || {
+		printf "%b✗ could not find venv%b \n" $RED $NC
+		exit 2
+	}
+}
+
+create_env() {
+	if [ -d "$PWD/venv_$( basename $PWD )" ]; then
+		printf "%b✗ venv already exists%b \n" $RED $NC
+		exit 3
+	
+	else	
+		deactivate &> /dev/null
+
+		python -m venv "venv_$( basename $PWD )" 
+		printf "%b✓ created:%b venv_$( basename $PWD ) \n" $GREEN $NC
+	fi
+}
+
+remove_env() {
+	deactivate &> /dev/null
+
+	if [ -d "$PWD/venv_$( basename $PWD )" ]; then
+		rm -rf "$PWD/venv_$( basename $PWD )"
+	else
+		printf "%b✗ could not find venv%b \n" $RED $NC
+		exit 2
+	fi
+}
+
+
+usage() { printf "%s" "\
+Usage: pyenv --option
+
+Manage python virtual envs
+
+Options:
+	-c, --create		Create a python venv in the current git repository.
+
+	-s, --switch		Switch venv: deactivate current venv and activate the
+				one in the current git repository.
+
+	-r, --remove		Remove the python venv in the current git repository.
+
+	-d, --deactivate	Deactivate the active python venv.	
+
+	-h, --help		Display the current help message.
+"
+exit 1
+}
+
+
+PARSED_ARGS=$(getopt -o :csrdh --long create,switch,remove,deactivate,help -n 'penv' -- "$@")
+
+if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
+if [ $# == 0 ] ; then usage; fi
+
+
+eval set -- "$PARSED_ARGS"
+
+while true; do
+    case "$1" in
+	-c | --create) create_env ;;
+	-s | --switch) switch_env ;;
+	-r | --remove) remove_env ;;
+	-d | --deactivate) deactivate ;;
+	-h | --help) usage ;;
+	--) shift; break ;;
+	*)
+	    echo "Invalid option $1"
+	    usage
+	    ;;
+    esac
+
+    shift
+done
+
+
