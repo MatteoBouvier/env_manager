@@ -12,7 +12,7 @@ Scripts for easily managing python virtual envs
 	- `make install`
 
 
-
+To also install aliases, run `make install ALIASES=true`. This will install `cenv` as shortcut for `pyenv -c`, `senv` for `pyenv -s`, `denv` and `renv`.
 
 
 
