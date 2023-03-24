@@ -18,6 +18,7 @@ Options:
 	-p		privacy setting: 'private', 'public' or 'internal'
 	-h 		Display this help message.
 "
+exit $1
 }
 
 # get arguments ---------------------------------------------------------------
@@ -27,17 +28,16 @@ GIT_PRIVACY="private"
 
 while getopts "hg:a:u:p:" option; do
 	case "$option" in
-		h ) help
-		    exit ;;
+		h ) help ;;
 		g ) GIT=$OPTARG
-                    [ "$GIT" = "gitlab" ] || [ "$GIT" = "github" ] || echo "Invalid -g option\n" && help && exit 1;;
+                    [ "$GIT" = "gitlab" ] || [ "$GIT" = "github" ] || printf '%s\n' "Invalid -g option" & help 1;;
 		a ) GIT_ADDRESS=$OPTARG ;;
 		u ) GIT_USER=$OPTARG ;;
 		p ) GIT_PRIVACY=$OPTARG 
-		    [ "$GIT_PRIVACY" = "public" ] || [ "$GIT_PRIVACY" = "private" || [ "$GIT_PRIVACY" = "internal" ] || echo "Invalid -p option\n" && help && exit 1 ;;
-		\?) echo "Invalid option: -$OPTARG" >&2; exit 1;;
-		: ) echo "Missing option argument for -$OPTARG" >&2; exit 1;;
-		* ) echo "Invalid option: -$OPTARG" >&2; exit 1;;
+		    [ "$GIT_PRIVACY" = "public" ] || [ "$GIT_PRIVACY" = "private" || [ "$GIT_PRIVACY" = "internal" ] || printf '%s\n' "Invalid -p option" & help 1 ;;
+		\?) help 1 ;;
+		:)  help 1 ;;
+		* ) help 1 ;;
 
 	esac
 done
@@ -45,8 +45,7 @@ done
 shift "$((OPTIND-1))"
 
 if [ -z $1 ]; then
-	help
-	exit 1
+	help 1
 fi
 
 REPO_NAME=$1
@@ -102,7 +101,6 @@ git add $REPO_NAME/
 
 git commit -m "initial commit"
 git branch -M main
-
 
 if [ "$GIT" = 'github' ]; then
 	gh repo create $REPO_NAME$GIT_ADDRESS --$GIT_PRIVACY --source=. --remote=origin --push
