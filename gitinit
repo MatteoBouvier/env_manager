@@ -1,0 +1,115 @@
+#!/bin/zsh
+
+# positional arguments : repository_name $1
+#
+# arguments : gitlab adress
+# 	      gitlab username
+
+help() {
+	printf "%s\n" "\
+Usage: gitinit [options] REPO_NAME
+
+Initialise a python git repository.
+
+Options:
+	-g 		git platform: either 'gitlab' or 'github'
+	-a		git address complement
+	-u		gitlab/github user name	
+	-p		privacy setting: 'private', 'public' or 'internal'
+	-h 		Display this help message.
+"
+}
+
+# get arguments ---------------------------------------------------------------
+GIT="github"
+GIT_USER="MatteoBouvier"
+GIT_PRIVACY="private"
+
+while getopts "hg:a:u:p:" option; do
+	case "$option" in
+		h ) help
+		    exit ;;
+		g ) GIT=$OPTARG
+                    [ "$GIT" = "gitlab" ] || [ "$GIT" = "github" ] || echo "Invalid -g option\n" && help && exit 1;;
+		a ) GIT_ADDRESS=$OPTARG ;;
+		u ) GIT_USER=$OPTARG ;;
+		p ) GIT_PRIVACY=$OPTARG 
+		    [ "$GIT_PRIVACY" = "public" ] || [ "$GIT_PRIVACY" = "private" || [ "$GIT_PRIVACY" = "internal" ] || echo "Invalid -p option\n" && help && exit 1 ;;
+		\?) echo "Invalid option: -$OPTARG" >&2; exit 1;;
+		: ) echo "Missing option argument for -$OPTARG" >&2; exit 1;;
+		* ) echo "Invalid option: -$OPTARG" >&2; exit 1;;
+
+	esac
+done
+
+shift "$((OPTIND-1))"
+
+if [ -z $1 ]; then
+	help
+	exit 1
+fi
+
+REPO_NAME=$1
+
+echo "> $REPO_NAME"
+
+# create repo folder ----------------------------------------------------------
+mkdir -p $HOME/git/$REPO_NAME
+cd $HOME/git/$REPO_NAME
+
+# base content ----------------------------------------------------------------
+mkdir $REPO_NAME
+touch $REPO_NAME/__init__.py
+
+echo "# $REPO_NAME" >> README.md
+echo "venv_*" >> .gitignore
+
+# git repo creation
+git init
+
+# pre-commit install ----------------------------------------------------------
+source pyenv -dcs
+pip install mypy black pre-commit
+
+echo "fail_fast: false
+
+repos:
+  - repo: https://github.com/ambv/black
+    rev: 22.12.0
+    hooks:
+      - id: black
+        language_version: python3.10
+        exclude: ^build/
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.0.1
+    hooks:
+      - id: mypy
+        files: ^$REPO_NAME/
+        args: [--strict]
+        language_version: python3.10
+
+" >> .pre-commit-config.yaml
+
+git add .pre-commit-config.yaml
+
+pre-commit install
+
+# git commit and push ------------------------------------------
+git add README.md
+git add .gitignore
+git add $REPO_NAME/
+
+git commit -m "initial commit"
+git branch -M main
+
+
+if [ "$GIT" = 'github' ]; then
+	gh repo create $REPO_NAME$GIT_ADDRESS --$GIT_PRIVACY --source=. --remote=origin --push
+else
+	git remote add origin git@$GIT$GIT_ADDRESS:$GIT_USER/$REPO_NAME.git
+	git push -u origin main
+fi
+
+
+
