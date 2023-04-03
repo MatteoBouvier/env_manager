@@ -4,7 +4,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-deactivate_copy () {
+deactivate_copy(){
         if [ -n "${_OLD_VIRTUAL_PATH:-}" ]
         then
                 PATH="${_OLD_VIRTUAL_PATH:-}" 
@@ -35,7 +35,7 @@ deactivate_copy () {
         fi
 }
 
-switch_env() {
+switch_env(){
 	deactivate_copy &> /dev/null
 
 	{
@@ -47,7 +47,7 @@ switch_env() {
 	}
 }
 
-create_env() {
+create_env(){
 	if [ -d "$PWD/venv_$( basename $PWD )" ]; then
 		printf "%b✗ venv already exists%b \n" $RED $NC
 		return 1
@@ -60,17 +60,25 @@ create_env() {
 	fi
 }
 
-remove_env() {
+remove_env(){
 	deactivate_copy &> /dev/null
 
 	if [ -d "$PWD/venv_$( basename $PWD )" ]; then
 		rm -rf "$PWD/venv_$( basename $PWD )"
 	else
-		printf "%b✗ could not find venv%b \n" $RED $NC
+		printf "%b✗ No active venv%b \n" $RED $NC
 		return 1
 	fi
 }
 
+add_path(){
+	if [ -z "$VIRTUAL_ENV" ]; then
+		printf "%b✗ No active venv%b \n" $RED $NC
+		return 1
+	fi
+
+	echo "$HOME/git/$1" > "$VIRTUAL_ENV/lib/$( ls $VIRTUAL_ENV/lib | sed -e 's/.*p/p/g')/site-packages/$1.pth"
+}
 
 usage() { printf "%s" "\
 Usage: pyenv --options
@@ -85,7 +93,9 @@ Options:
 
 	-r, --remove		Remove the python venv in the current git repository.
 
-	-d, --deactivate	Deactivate the active python venv.	
+	-d, --deactivate	Deactivate the active python venv.
+
+	-p, --add-to-path	Add a custom python package in ~/git/ to the PYTHON_PATH.	
 
 	-h, --help		Display the current help message.
 "
@@ -93,7 +103,7 @@ return 1
 }
 
 
-PARSED_ARGS=$(getopt -o :csrdh --long create,switch,remove,deactivate,help -n 'penv' -- "$@")
+PARSED_ARGS=$(getopt -o :csrdph --long create,switch,remove,deactivate,add-to-path,help -n 'pyenv' -- "$@")
 
 if (( $? != 0 )) ; then echo "Found invalid options, try 'pyenv -h'." >&2 ; return 1 ; fi
 if (( $# == 0 )) ; then usage; fi
@@ -108,6 +118,7 @@ while true; do
 	-s | --switch) switch_env ;;
 	-r | --remove) remove_env ;;
 	-d | --deactivate) deactivate_copy ;;
+	-p | --add-to-path) add_path "$3" ;;
 	-h | --help) usage ;;
 	--) shift; break ;;
 	*)

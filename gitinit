@@ -60,10 +60,34 @@ cd $HOME/git/$REPO_NAME
 mkdir $REPO_NAME
 touch $REPO_NAME/__init__.py
 
-echo "# $REPO_NAME" >> README.md
-echo "venv_*" >> .gitignore
+mkdir tests
 
-# git repo creation
+echo "# $REPO_NAME" >> README.md
+
+echo "venv_*
+*__pycache__*
+*.pyc
+.idea
+*.egg-info" >> .gitignore
+
+echo "[build-systme]
+requires = ['setuptools', 'setuptools-scm']
+build-backend = ['setuptools.build_meta']
+
+[project]
+name = '$REPO_NAME'
+version = '0.0.1'
+readme = 'README.md'
+
+[tool.setuptools]
+packages = ['$REPO_NAME']
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+exclude = ['build', 'tests']" >> pyproject.toml
+
+# git repo creation -----------------------------------------------------------
 git init
 
 # pre-commit install ----------------------------------------------------------
@@ -78,7 +102,6 @@ repos:
     hooks:
       - id: black
         language_version: python3.10
-        exclude: ^build/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.0.1

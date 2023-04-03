@@ -17,15 +17,15 @@ install:
 	@chmod 755 ~/bin/gitinit
 
 ifeq ($(ALIAS_EXISTS),0)
-	@echo "# >>>>>> PYENV ALIASES\n" | tee -a $(ALIAS_PATH)
-	@echo "%s\n" $(STR_ALIAS) | tee -a $(ALIAS_PATH)
+	@echo "# >>>>>> PYENV ALIASES" | tee -a $(ALIAS_PATH)
+	@printf "%s\n" $(STR_ALIAS) | tee -a $(ALIAS_PATH)
 ifeq ($(ALIASES),true)
-	@echo "alias cenv='. ~/bin/pyenv -c'\n" | tee -a $(ALIAS_PATH)
-	@echo "alias senv='. ~/bin/pyenv -s'\n" | tee -a $(ALIAS_PATH)
-	@echo "alias denv='. ~/bin/pyenv -d'\n" | tee -a $(ALIAS_PATH)
-	@echo "alias renv='. ~/bin/pyenv -r'\n" | tee -a $(ALIAS_PATH)
+	@echo "alias cenv='. ~/bin/pyenv -c'" | tee -a $(ALIAS_PATH)
+	@echo "alias senv='. ~/bin/pyenv -s'" | tee -a $(ALIAS_PATH)
+	@echo "alias denv='. ~/bin/pyenv -d'" | tee -a $(ALIAS_PATH)
+	@echo "alias renv='. ~/bin/pyenv -r'" | tee -a $(ALIAS_PATH)
 endif
-	@echo "# <<<<<< PYENV END\n" | tee -a $(ALIAS_PATH)
+	@echo "# <<<<<< PYENV END" | tee -a $(ALIAS_PATH)
 endif
 
 uninstall:
