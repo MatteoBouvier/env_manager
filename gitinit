@@ -1,9 +1,4 @@
-#!/bin/zsh
-
-# positional arguments : repository_name $1
-#
-# arguments : gitlab adress
-# 	      gitlab username
+#!/bin/bash
 
 help() {
 	printf "%s\n" "\
@@ -26,15 +21,17 @@ GIT="github"
 GIT_USER="MatteoBouvier"
 GIT_PRIVACY="private"
 
+echo 'in'
+
 while getopts "hg:a:u:p:" option; do
 	case "$option" in
 		h ) help ;;
-		g ) GIT=$OPTARG
-                    [ "$GIT" = "gitlab" ] || [ "$GIT" = "github" ] || printf '%s\n' "Invalid -g option" & help 1;;
+		g ) GIT=$OPTARG 
+			[ "$GIT" = "gitlab" ] || [ "$GIT" = "github" ] || { printf '%s\n' "Invalid -g option"; help 1; } ;;
 		a ) GIT_ADDRESS=$OPTARG ;;
 		u ) GIT_USER=$OPTARG ;;
 		p ) GIT_PRIVACY=$OPTARG 
-		    [ "$GIT_PRIVACY" = "public" ] || [ "$GIT_PRIVACY" = "private" || [ "$GIT_PRIVACY" = "internal" ] || printf '%s\n' "Invalid -p option" & help 1 ;;
+			[ "$GIT_PRIVACY" = "public" ] || [ "$GIT_PRIVACY" = "private" || [ "$GIT_PRIVACY" = "internal" ] || {printf '%s\n' "Invalid -p option"; help 1;} ;;
 		\?) help 1 ;;
 		:)  help 1 ;;
 		* ) help 1 ;;
@@ -42,9 +39,13 @@ while getopts "hg:a:u:p:" option; do
 	esac
 done
 
+echo 'out'
+
+
 shift "$((OPTIND-1))"
 
-if [ -z $1 ]; then
+if [ -z "$1" ]; then
+	echo "test"
 	help 1
 fi
 
@@ -64,13 +65,15 @@ mkdir tests
 
 echo "# $REPO_NAME" >> README.md
 
-echo "venv_*
+cat << EOF > .gitignore
 *__pycache__*
 *.pyc
 .idea
-*.egg-info" >> .gitignore
+*.egg-info
+EOF
 
-echo "[build-systme]
+cat << EOF > pyproject.toml
+[build-system]
 requires = ['setuptools', 'setuptools-scm']
 build-backend = ['setuptools.build_meta']
 
@@ -85,7 +88,8 @@ packages = ['$REPO_NAME']
 [tool.black]
 line-length = 88
 target-version = ['py310']
-exclude = ['build', 'tests']" >> pyproject.toml
+exclude = ['build', 'tests']
+EOF
 
 # git repo creation -----------------------------------------------------------
 git init
@@ -94,7 +98,8 @@ git init
 source pyenv -dcs
 pip install mypy black pre-commit
 
-echo "fail_fast: false
+cat << EOF > .pre-commit-config.yaml
+fail_fast: false
 
 repos:
   - repo: https://github.com/ambv/black
@@ -110,8 +115,7 @@ repos:
         files: ^$REPO_NAME/
         args: [--strict]
         language_version: python3.10
-
-" >> .pre-commit-config.yaml
+EOF
 
 git add .pre-commit-config.yaml
 
